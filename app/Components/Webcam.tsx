@@ -6,35 +6,33 @@ export default function Webcam() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const [photo, setPhoto] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [photo, setPhoto] = useState<Blob | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     useEffect(() => {
         let stream: MediaStream | null = null;
 
         async function initCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true })
-
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                 }
-            } catch(e) {
-               console.log(e)
+            } catch (error: unknown) {
+                console.error("Error accessing webcam:", error);
             }
         }
 
-        initCamera()
+        initCamera();
 
         return () => {
-            if( stream ) {
-                stream.getTracks().forEach(t => t.stop())
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
             }
-        }
-    }, [])
+        };
+    }, []);
 
-    function takeSnapshot(): void {
+    function takePhoto() {
         const video = videoRef.current;
         const canvas = canvasRef.current;
 
@@ -42,79 +40,52 @@ export default function Webcam() {
             return;
         }
 
-        const width = video.videoWidth;
-        const height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext("2d");
 
-        if (!width || !height) {
-            return;
-        }
+        if (context) {
+            context.drawImage(video, 0, 0);
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    setPhoto(blob);
+                    setPreviewUrl(URL.createObjectURL(blob));
+                }
+            },"image/png");
 
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            ctx.drawImage(video, 0, 0, width, height);
-            setPhoto(canvas.toDataURL("image/png"));
-            setSaveMessage(null);
         }
     }
 
-    async function savePhoto(): Promise<void> {
-        if (!photo) {
-            setSaveMessage("Prends d'abord une photo.");
+    async function savePhoto(){
+        if(!photo){
             return;
         }
 
-        setIsSaving(true);
-        setSaveMessage(null);
+        const formData = new FormData();
+        formData.append("photo", photo, "photo.png");
 
-        try {
-            const response = await fetch("/api/photos", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ image: photo }),
-            });
-
-            const payload: { message?: string; fileName?: string; error?: string } = await response.json();
-
-            if (!response.ok) {
-                throw new Error(payload.error ?? "Impossible de sauvegarder la photo.");
-            }
-
-            setSaveMessage(payload.fileName ? `Photo sauvegardée: ${payload.fileName}` : payload.message ?? "Photo sauvegardée.");
-        } catch (error) {
-            setSaveMessage(error instanceof Error ? error.message : "Impossible de sauvegarder la photo.");
-        } finally {
-            setIsSaving(false);
-        }
+        await fetch("/api/save-photo", {
+            method: "POST",
+            body: formData,
+        });
     }
-
 
     return (
         <div>
             <video ref={videoRef} autoPlay playsInline />
-
-            <button type="button" onClick={takeSnapshot}>
-                Cheese
-            </button>
-
-            <button type="button" onClick={savePhoto} disabled={!photo || isSaving}>
-                {isSaving ? "Sauvegarde..." : "Save photo"}
-            </button>
-
+            <button onClick={takePhoto}>Take Photo</button>
+            <button onClick={savePhoto}>Save Photo</button>
             {photo && (
                 <div>
-                    <h2>La photo</h2>
-                    <img src={photo} alt="Photo capturée depuis la webcam" />
+                    <h2>Captured Photo:</h2>
+                    <img src={previewUrl || ""} alt="Captured" />
                 </div>
             )}
+            <canvas
+                ref={canvasRef}
+                style={{ display: "none" }}
+            />
 
-            {saveMessage && <p>{saveMessage}</p>}
-            <canvas ref={canvasRef} style={{ display: "none" }} />
         </div>
-    )
+    );
 }
