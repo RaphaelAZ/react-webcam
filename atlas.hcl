@@ -10,7 +10,7 @@ data "external_schema" "sequelize" {
 
 env "sequelize" {
     src = data.external_schema.sequelize.url
-    dev = "mysql://root@localhost:3306/react_webcam"
+    dev = "mysql://root@localhost:3306/5esgi-next"
 
     migration {
         dir = "file://migrations"

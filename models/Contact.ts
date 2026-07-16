@@ -15,4 +15,8 @@ export default class Contact extends Model {
     @AllowNull(false)
     @Column(DataType.STRING)
     nickname!: string;
+
+    @AllowNull(false)
+    @Column(DataType.STRING)
+    password!: string;
 }

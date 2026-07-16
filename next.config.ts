@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: [
+    "sequelize",
+    "sequelize-typescript",
+    "mysql2",
+  ],
 };
 
 export default nextConfig;

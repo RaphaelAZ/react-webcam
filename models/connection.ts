@@ -10,7 +10,7 @@ const sequelize = new Sequelize({
     port: 3306,
     username: 'root',
     password: "",
-    database: 'react_webcam',
+    database: '5esgi-next',
     models: [Contact,Conversation,Message,ConversationContact],
 });
 

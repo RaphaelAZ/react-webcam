@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": null,
-    "database": "react_webcam",
+    "database": "5esgi-next",
     "host": "127.0.0.1",
     "dialect": "mysql"
   },

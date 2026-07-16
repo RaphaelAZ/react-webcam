@@ -21,7 +21,9 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "allowImportingTsExtensions":true
+    "allowImportingTsExtensions":true,
+        "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "next-env.d.ts",
